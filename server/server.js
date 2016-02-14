@@ -2,18 +2,33 @@
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
 var http = require('http');
-var connections = [];
+var currentId = 0;
+var players = [];
 
+var Player = function(connection) {
+  this.id = currentId++;
+  this.connection = connection;
+}
+
+Player.prototype.notify = function(message) {
+  if (typeof(message) !== "string") {
+    this.connection.sendUTF(JSON.stringify(message));
+  } else {
+    this.connection.sendUTF(message);
+  }
+};
+
+// Load dictionary
 var words = fs.readFileSync('words', 'utf8').split('\n');
 words.pop();
 
+// Need an HTTP server for websocket upgrade, but don't want to serve HTTP content
 var server = http.createServer(function(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
     response.writeHead(404);
     response.end();
 });
+
 server.listen(8080, function() {
-    console.log((new Date()) + ' Server is listening on port 8080');
 });
 
 wsServer = new WebSocketServer({
@@ -40,31 +55,27 @@ wsServer.on('request', function(request) {
     }
 
     var connection = request.accept('echo-protocol', request.origin);
-    connections.push(connection);
+    var newPlayer = new Player(connection);
+    players.push(newPlayer);
 
-    connection.on('message', function(message) {
-        if (message.type === 'utf8') {
-            console.log('Received Message: ' + message.utf8Data);
-            connection.sendUTF(message.utf8Data);
+    players.forEach(function(player) {
+      player.notify({
+        action: 'newPlayer',
+        data: {
+          id: player.id,
+          local: player.id == newPlayer.id
         }
-        else if (message.type === 'binary') {
-            console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-            connection.sendBytes(message.binaryData);
-        }
+      });
     });
 
     connection.on('close', function(reasonCode, description) {
-      connections.splice(connections.indexOf(connection), 1);
-      console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+      players.splice(players.indexOf(newPlayer), 1);
     });
 });
 
 function blastOut(message) {
-  var json = JSON.stringify(message);
-
-  connections.forEach(function(connection) {
-    console.log("Sending payload to", connection.remoteAddress);
-    connection.sendUTF(json);
+  players.forEach(function(player) {
+    player.notify(message);
   });
 }
 

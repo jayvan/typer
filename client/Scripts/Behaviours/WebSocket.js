@@ -14,12 +14,13 @@ NetworkManager.prototype.awake = function() {
   var self = this;
   this.spawner = this.spawnerNode.getScript("qc.engine.TypeMaster")
   this.connection = new WebSocket(this.websocketHost, this.websocketProtocol);
-  console.log(this.websocket);
+
   this.connection.onmessage = function(message) {
     var command = JSON.parse(message.data);
-    console.log(command);
     if (command.action === "spawn") {
-      self.spawner._spawnEnemy(command.data.word);
+      self.spawner.spawnEnemy(command.data.word);
+    } else if (command.action === "newPlayer") {
+      self.spawner.spawnPlayer(command.data);
     }
   };
 };
