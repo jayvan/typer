@@ -1,8 +1,9 @@
-#!/usr/bin/env node
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
 var http = require('http');
+
 var currentId = 0;
+var spawnId = 0;
 var players = [];
 
 var Player = function(connection) {
@@ -56,35 +57,59 @@ wsServer.on('request', function(request) {
 
     var connection = request.accept('echo-protocol', request.origin);
     var newPlayer = new Player(connection);
-    players.push(newPlayer);
 
     players.forEach(function(player) {
       player.notify({
         action: 'newPlayer',
         data: {
+          id: newPlayer.id,
+          local: false
+        }
+      });
+
+      newPlayer.notify({
+        action: 'newPlayer',
+        data: {
           id: player.id,
-          local: player.id == newPlayer.id
+          local: false
         }
       });
     });
+
+    newPlayer.notify({
+      action: 'newPlayer',
+      data: {
+        id: newPlayer.id,
+        local: true
+      }
+      });
+
+    players.push(newPlayer);
 
     connection.on('close', function(reasonCode, description) {
       players.splice(players.indexOf(newPlayer), 1);
     });
 });
 
-function blastOut(message) {
+function notifyAll(message) {
   players.forEach(function(player) {
     player.notify(message);
   });
 }
 
 setInterval(function() {
+  if (players.length == 0) {
+    return;
+  }
+
+  spawnId = (spawnId + 1) % players.length;
+
   var word = words[Math.floor(Math.random() * words.length)];
-  blastOut({
+  notifyAll({
     action: 'spawn',
     data: {
-      word: word
+      word: word,
+      playerId: spawnId
     }
   });
-}, 2500);
+}, 2000);

@@ -18,7 +18,7 @@ NetworkManager.prototype.awake = function() {
   this.connection.onmessage = function(message) {
     var command = JSON.parse(message.data);
     if (command.action === "spawn") {
-      self.spawner.spawnEnemy(command.data.word);
+      self.spawner.spawnEnemy(command.data.word, command.data.playerId);
     } else if (command.action === "newPlayer") {
       self.spawner.spawnPlayer(command.data);
     }
