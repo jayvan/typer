@@ -27,6 +27,9 @@ TypeMaster.prototype.spawnEnemy = function(word, playerId) {
   enemy.updateText();
 
   this.players[playerId].addEnemy(enemy);
+  if (playerId !== this.localPlayer.id) {
+    enemyNode.alpha = 0.75;
+  }
 }
 
 TypeMaster.prototype.spawnPlayer = function(playerData) {
@@ -38,10 +41,6 @@ TypeMaster.prototype.spawnPlayer = function(playerData) {
 };
 
 TypeMaster.prototype.awake = function() {
-  var self = this;
-  this.addListener(this.game.input.onKeyDown, function(keyCode) {
-    self.handleKey(String.fromCharCode(keyCode));
-  });
 };
 
 TypeMaster.prototype.handleKey = function(letter) {

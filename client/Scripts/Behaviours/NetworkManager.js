@@ -1,20 +1,37 @@
 var NetworkManager = qc.defineBehaviour('qc.engine.NetworkManager', qc.Behaviour, function() {
   this.websocketHost = 'ws://localhost:8080';
   this.websocketProtocol = 'echo-protocol';
-  this.spawner = null;
+  this.modelNode = null;
+  this.model = null;
   this.connection = null;
 }, {
   websocketHost: qc.Serializer.STRING,
   websocketProtocol: qc.Serializer.STRING,
-  spawner: qc.Serializer.NODE
+  modelNode: qc.Serializer.NODE
 });
 
 NetworkManager.prototype.awake = function() {
+  var self = this;
+  this.model = this.modelNode.getScript("qc.engine.ClientModel")
   this.connection = new WebSocket(this.websocketHost, this.websocketProtocol);
-  console.log(this.websocket);
-  this.connection.onmessage = function(json) {
-    var command = JSON.parse(json);
-    console.log(command);
+
+  this.connection.onmessage = function(message) {
+    var message = JSON.parse(message.data);
+
+    if (message.snapshot) {
+      console.log("Haven't implemented snapshotting yet");
+    } else {
+      var commands = self.model.flushCommands();
+
+      if (commands.length > 0) {
+        self.connection.send(JSON.stringify(commands));
+      }
+
+      message.commands.forEach(function(command) {
+        self.model.runCommand(command);
+      });
+
+      self.model.logicUpdate(message.delta);
+    }
   };
 };
-

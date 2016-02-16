@@ -1,27 +1,8 @@
-var fs = require('fs');
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 
-var currentId = 0;
-var spawnId = 0;
-var players = [];
+var connections = [];
 
-var Player = function(connection) {
-  this.id = currentId++;
-  this.connection = connection;
-}
-
-Player.prototype.notify = function(message) {
-  if (typeof(message) !== "string") {
-    this.connection.sendUTF(JSON.stringify(message));
-  } else {
-    this.connection.sendUTF(message);
-  }
-};
-
-// Load dictionary
-var words = fs.readFileSync('words', 'utf8').split('\n');
-words.pop();
 
 // Need an HTTP server for websocket upgrade, but don't want to serve HTTP content
 var server = http.createServer(function(request, response) {
@@ -47,6 +28,15 @@ function originIsAllowed(origin) {
   return true;
 }
 
+var handlers = {
+  receive: null,
+  connect: null
+};
+
+function on(type, handler) {
+  handlers[type] = handler;
+}
+
 wsServer.on('request', function(request) {
     if (!originIsAllowed(request.origin)) {
       // Make sure we only accept requests from an allowed origin
@@ -55,61 +45,35 @@ wsServer.on('request', function(request) {
       return;
     }
 
-    var connection = request.accept('echo-protocol', request.origin);
-    var newPlayer = new Player(connection);
+    var connection = request.accept('main', request.origin);
+    connections.push(connection);
 
-    players.forEach(function(player) {
-      player.notify({
-        action: 'newPlayer',
-        data: {
-          id: newPlayer.id,
-          local: false
-        }
-      });
-
-      newPlayer.notify({
-        action: 'newPlayer',
-        data: {
-          id: player.id,
-          local: false
-        }
-      });
+    handlers.connect(function(syncMessage) {
+      connection.sendUTF(JSON.stringify(syncMessage));
     });
 
-    newPlayer.notify({
-      action: 'newPlayer',
-      data: {
-        id: newPlayer.id,
-        local: true
+    connection.on('message', function(data, flags) {
+      if (data.type === 'utf8') {
+        handlers.receive(JSON.parse(data.utf8Data));
       }
-      });
-
-    players.push(newPlayer);
+    });
 
     connection.on('close', function(reasonCode, description) {
-      players.splice(players.indexOf(newPlayer), 1);
+      connections.splice(connections.indexOf(connection), 1);
     });
 });
 
-function notifyAll(message) {
-  players.forEach(function(player) {
-    player.notify(message);
-  });
-}
-
-setInterval(function() {
-  if (players.length == 0) {
-    return;
+var notifyAll = function(message) {
+  if (typeof(message) !== "string") {
+    message = JSON.stringify(message);
   }
 
-  spawnId = (spawnId + 1) % players.length;
-
-  var word = words[Math.floor(Math.random() * words.length)];
-  notifyAll({
-    action: 'spawn',
-    data: {
-      word: word,
-      playerId: spawnId
-    }
+  connections.forEach(function(connection) {
+    connection.sendUTF(message);
   });
-}, 2000);
+};
+
+module.exports = {
+  notifyAll: notifyAll,
+  on: on
+}
