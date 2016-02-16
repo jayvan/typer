@@ -1,20 +1,30 @@
 var ClientModel = qc.defineBehaviour('qc.engine.ClientModel', qc.Behaviour, function() {
   this.tick = 0;
-  this.model = new Model();
+  this.model = null;
   this.pendingCommands = [];
+  this.spawnerNode = null;
+  this.localId = -1;
 }, {
-    // fields need to be serialized
+  spawnerNode: qc.Serializer.NODE
 });
 
 ClientModel.prototype.awake = function() {
   var self = this;
+  this.spawner = this.spawnerNode.getScript('qc.engine.Spawner');
+  this.model = new Model();
+
   this.addListener(this.game.input.onKeyDown, function(keyCode) {
     self.submitCommand({
-      type: 'keyDown',
+      type: 'keyTyped',
       data: {
-        key: String.fromCharCode(keyCode)
+        key: String.fromCharCode(keyCode),
+        playerId: self.localId
       }
     });
+  });
+
+  this.model.enemySpawned.subscribe(function(enemy) {
+    self.spawner.spawn(enemy, enemy.playerId == self.localId);
   });
 };
 
@@ -26,7 +36,8 @@ ClientModel.prototype.logicUpdate = function(delta) {
   this.model.update(delta);
 };
 
-ClientModel.prototype.loadSnapshot = function(snapshot) {
+ClientModel.prototype.loadSnapshot = function(id, snapshot) {
+  this.localId = id;
   this.model.deserialize(snapshot);
 };
 

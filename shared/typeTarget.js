@@ -1,11 +1,16 @@
+var Action = require(__base + 'shared/action');
+
 var TypeTarget = function(word, playerId) {
-  this._letterIndex = 0;
+  this.letterIndex = 0;
   this.word = word;
   this.playerId = playerId;
+  this.indexChanged = new Action();
 }
 
 TypeTarget.prototype.sendKey = function(key) {
-  if (this.word[this._letterIndex] === key) {
+  if (this.word[this.letterIndex] === key) {
+    this.letterIndex++;
+    this.indexChanged.trigger();
     return true;
   }
 
@@ -13,11 +18,12 @@ TypeTarget.prototype.sendKey = function(key) {
 }
 
 TypeTarget.prototype.reset = function() {
-  this._letterIndex = 0;
+  this.letterIndex = 0;
+  this.indexChanged.trigger();
 }
 
 TypeTarget.prototype.finished = function() {
-  this._letterIndex === this.word.length;
+  return this.letterIndex === this.word.length;
 }
 
 module.exports = TypeTarget;

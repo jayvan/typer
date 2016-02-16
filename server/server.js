@@ -30,7 +30,8 @@ function originIsAllowed(origin) {
 
 var handlers = {
   receive: null,
-  connect: null
+  connect: null,
+  disconnect: null
 };
 
 function on(type, handler) {
@@ -48,18 +49,19 @@ wsServer.on('request', function(request) {
     var connection = request.accept('main', request.origin);
     connections.push(connection);
 
-    handlers.connect(function(syncMessage) {
+    handlers.connect(connection, function(syncMessage) {
       connection.sendUTF(JSON.stringify(syncMessage));
     });
 
     connection.on('message', function(data, flags) {
       if (data.type === 'utf8') {
-        handlers.receive(JSON.parse(data.utf8Data));
+        handlers.receive(connection, JSON.parse(data.utf8Data));
       }
     });
 
     connection.on('close', function(reasonCode, description) {
       connections.splice(connections.indexOf(connection), 1);
+      handlers.disconnect(connection);
     });
 });
 

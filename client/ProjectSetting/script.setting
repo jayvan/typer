@@ -1,1 +1,1 @@
-{"logicalScriptOrder":["Scripts/nodeShim.js"],"editorScriptOrder":[]}
+{"logicalScriptOrder":["Scripts/nodeShim.js","Scripts/shared/action.js","Scripts/shared/typeTarget.js","Scripts/shared/player.js","Scripts/shared/model.js"],"editorScriptOrder":[]}

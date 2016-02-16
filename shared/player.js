@@ -18,10 +18,9 @@ Player.prototype.keyTyped = function(letter) {
 
   for (var i = 0; i < this.targetedEnemies.length; i++) {
     var enemy = this.targetedEnemies[i];
-    var matched = enemy.tryKey(letter);
+    var matched = enemy.sendKey(letter);
 
     if (enemy.finished()) {
-      enemy.gameObject.destroy();
       this.enemies.splice(this.enemies.indexOf(enemy), 1);
       reset = true;
     }
@@ -48,3 +47,5 @@ Player.prototype.keyTyped = function(letter) {
     this.targetedEnemies = matches;
   }
 };
+
+module.exports = Player;

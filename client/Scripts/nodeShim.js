@@ -1,6 +1,9 @@
+window.__base = "";
+
 window.require = function(path) {
-  last = path.split('/').pop;
-  return window[last];
+  var last = path.split('/').pop();
+  var name = last.charAt(0).toUpperCase() + last.slice(1);
+  return window[name];
 };
 
 window.module = {};
