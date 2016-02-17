@@ -42,6 +42,7 @@ setInterval(function() {
       type: 'spawnEnemy',
       data: {
         playerId: owner,
+        duration: 7000 + Math.random() * 3000,
         word: WordBank.getWord()
       }
     });
