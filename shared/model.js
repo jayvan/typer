@@ -57,13 +57,9 @@ Model.prototype.update = function(delta) {
 };
 
 Model.prototype.serialize = function() {
-  return {
-    tbd: 'fill me in'
-  };
 };
 
 Model.prototype.deserialize = function(state) {
-
 };
 
 module.exports = Model;

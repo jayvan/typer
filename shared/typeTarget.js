@@ -2,6 +2,7 @@ var Action = require(__base + 'shared/action');
 
 var TypeTarget = function(params) {
   this.letterIndex = 0;
+  this.id = params.id;
   this.word = params.word;
   this.playerId = params.playerId;
   this.lifetime = 0;

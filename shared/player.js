@@ -1,12 +1,13 @@
 var Player = function(id) {
   this.id = id;
-  this.enemies = [];
-  this.targetedEnemies = [];
+  this.enemies = {};
+  this.targetedEnemyIds = [];
 };
 
 Player.prototype.update = function(delta) {
-  for (var i = this.enemies.length - 1; i >= 0; i--) {
-    var enemy = this.enemies[i];
+  for (var enemyId in this.enemies) {
+    var enemy = this.enemies[enemyId];
+
     if (!enemy) {
       continue;
     }
@@ -20,59 +21,66 @@ Player.prototype.update = function(delta) {
 }
 
 Player.prototype.removeEnemy = function(enemy) {
-  this.enemies.splice(this.enemies.indexOf(enemy), 1);
+  delete this.enemies[enemy.id];
 
-  var index = this.targetedEnemies.indexOf(enemy);
+  var index = this.targetedEnemyIds.indexOf(enemy.id);
   if (index != -1) {
-    this.targetedEnemies.splice(index, 1);
+    this.targetedEnemyIds.splice(index, 1);
   }
 
-  if (this.targetedEnemies.length == 0) {
-    this.targetedEnemies = this.enemies;
+  if (this.targetedEnemiyIds.length == 0) {
+    this.resetTargets();
   }
+};
+
+Player.prototype.resetTargets = function() {
+  this.targetedEnemyIds = Object.keys(this.enemies);
 };
 
 Player.prototype.addEnemy = function(enemy) {
-  if (this.targetedEnemies.length == this.enemies.length) {
-    this.targetedEnemies.push(enemy);
+  if (this.targetedEnemyIds.length == Object.keys(this.enemies).length) {
+    this.targetedEnemyIds.push(enemy.id);
   }
 
-  this.enemies.push(enemy);
+  this.enemies[enemy.id] = enemy;
 };
 
 Player.prototype.keyTyped = function(letter) {
+  var self = this;
   var reset = false;
   var matches = [];
 
-  for (var i = 0; i < this.targetedEnemies.length; i++) {
-    var enemy = this.targetedEnemies[i];
+  for (var i = 0; i < this.targetedEnemyIds.length; i++) {
+    var enemyId = this.targetedEnemyIds[i];
+    var enemy = this.enemies[enemyId];
     var matched = enemy.sendKey(letter);
 
     if (enemy.finished()) {
-      this.enemies.splice(this.enemies.indexOf(enemy), 1);
+      delete this.enemies[enemyId];
+      this.targetedEnemyIds.splice(this.targetedEnemyIds.indexOf(enemyId), 1);
       reset = true;
     }
 
     if (matched) {
-      matches.push(enemy);
+      matches.push(enemy.id);
     }
   }
 
   if (reset) {
-    this.targetedEnemies.forEach(function(enemy) {
-      enemy.reset();
+    this.targetedEnemyIds.forEach(function(enemyId) {
+      self.enemies[enemyId].reset();
     });
 
-    this.targetedEnemies = this.enemies;
+    this.resetTargets();
   } else if (matches.length != 0) {
-    for (var i = 0; i < this.targetedEnemies.length; i++) {
-      var enemy = this.targetedEnemies[i];
-      if (matches.indexOf(enemy) === -1) {
+    for (var i = 0; i < this.targetedEnemyIds.length; i++) {
+      var enemy = this.enemies[this.targetedEnemyIds[i]];
+      if (matches.indexOf(enemy.id) === -1) {
         enemy.reset();
       }
     }
 
-    this.targetedEnemies = matches;
+    this.targetedEnemyIds = matches;
   }
 };
 

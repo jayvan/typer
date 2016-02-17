@@ -4,13 +4,14 @@ var WordBank = require(__base + 'wordbank');
 var Server = require(__base + 'server');
 var Model = require(__base + 'shared/model');
 
-var TICKS_PER_SECOND = 30;
+var TICKS_PER_SECOND = 60;
 
 var tick = 0;
 var commands = [];
 var gameModel = new Model();
 var lastUpdate = Date.now();
 var nextPlayerId = 0;
+var nextEnemyId = 0;
 var ids = {};
 
 setInterval(function() {
@@ -37,10 +38,12 @@ setInterval(function() {
   commands = [];
 
   if (Object.keys(ids).length > 0 && Math.random() > 0.99) {
-    var owner = ids[Object.keys(ids)[0]];
+    var online = Object.keys(ids);
+    var owner = ids[online[Math.floor(Math.random() * online.length)]];
     commands.push({
       type: 'spawnEnemy',
       data: {
+        id: nextEnemyId++,
         playerId: owner,
         duration: 7000 + Math.random() * 3000,
         word: WordBank.getWord()
