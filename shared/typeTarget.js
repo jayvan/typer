@@ -1,15 +1,27 @@
 var Action = require(__base + 'shared/action');
 
 var TypeTarget = function(params) {
-  this.letterIndex = 0;
+  this.letterIndex = params.letterIndex || 0;
   this.id = params.id;
   this.word = params.word;
   this.playerId = params.playerId;
-  this.lifetime = 0;
+  this.lifetime = params.lifetime || 0;
   this.duration = params.duration;
+  this.expired = params.expired || false;
   this.indexChanged = new Action();
-  this.expired = false;
   this.timedOut = new Action();
+};
+
+TypeTarget.prototype.serialize = function() {
+  return {
+    letterIndex: this.letterIndex,
+    id: this.id,
+    word: this.word,
+    playerId: this.playerId,
+    lifetime: this.lifetime,
+    duration: this.duration,
+    expired: this.expired
+  };
 };
 
 TypeTarget.prototype.update = function(delta) {

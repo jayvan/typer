@@ -2,9 +2,33 @@ var Player = require(__base + 'shared/player');
 var TypeTarget = require(__base + 'shared/typeTarget');
 var Action = require(__base + 'shared/action');
 
-var Model = function() {
-  this.players = {};
+var Model = function(params) {
+  var self = this;
+  if (params === undefined) {
+    params = {
+      players: []
+    };
+  }
+
   this.enemySpawned = new Action();
+
+  this.players = {};
+  Object.keys(params.players).forEach(function(playerId) {
+    var playerData = params.players[playerId];
+    var player = new Player(playerData);
+    self.players[playerData.id] = new Player(playerData);
+  });
+};
+
+Model.prototype.serialize = function() {
+  var serializedPlayers = {};
+  for (var playerId in this.players) {
+    serializedPlayers[playerId] = this.players[playerId].serialize();
+  }
+
+  return {
+    players: serializedPlayers
+  };
 };
 
 Model.prototype.runCommand = function(command) {
@@ -13,7 +37,7 @@ Model.prototype.runCommand = function(command) {
   //   id: Int (The id assigned to the player)
   // }
   if (command.type == "playerJoined") {
-    var player = new Player(command.data.id);
+    var player = new Player(command.data);
     this.players[player.id] = player;
   }
 
@@ -46,7 +70,7 @@ Model.prototype.runCommand = function(command) {
 };
 
 Model.prototype.update = function(delta) {
-  for (playerId in this.players) {
+  for (var playerId in this.players) {
     var player = this.players[playerId];
     if (!player) {
       continue;
@@ -54,12 +78,6 @@ Model.prototype.update = function(delta) {
 
     player.update(delta);
   }
-};
-
-Model.prototype.serialize = function() {
-};
-
-Model.prototype.deserialize = function(state) {
 };
 
 module.exports = Model;

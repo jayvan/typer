@@ -19,7 +19,7 @@ NetworkManager.prototype.awake = function() {
     var message = JSON.parse(message.data);
 
     if (message.snapshot) {
-      self.model.loadSnapshot(message.id, message.state);
+      self.model.loadModel(message.id, message.state);
     } else {
       var commands = self.model.flushCommands();
 

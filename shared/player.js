@@ -1,7 +1,26 @@
-var Player = function(id) {
-  this.id = id;
+var Player = function(params) {
+  var self = this;
+  this.id = params.id;
   this.enemies = {};
-  this.targetedEnemyIds = [];
+  Object.keys(params.enemies || {}).forEach(function(enemyId) {
+    var enemyData = params.enemies[enemyId];
+    self.enemies[enemyData.id] = new TypeTarget(enemyData);
+  });
+  this.targetedEnemyIds = params.targetedEnemyIds || [];
+};
+
+Player.prototype.serialize = function() {
+  var serializedEnemies = {};
+  for (enemyId in this.enemies) {
+    var enemy = this.enemies[enemyId];
+    serializedEnemies[enemyId] = enemy.serialize();
+  }
+
+  return {
+    id: this.id,
+    enemies: serializedEnemies,
+    targetedEnemyIds: this.targetedEnemyIds
+  };
 };
 
 Player.prototype.update = function(delta) {
@@ -28,7 +47,7 @@ Player.prototype.removeEnemy = function(enemy) {
     this.targetedEnemyIds.splice(index, 1);
   }
 
-  if (this.targetedEnemiyIds.length == 0) {
+  if (this.targetedEnemyIds.length == 0) {
     this.resetTargets();
   }
 };

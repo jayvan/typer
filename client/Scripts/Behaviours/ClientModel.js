@@ -9,9 +9,22 @@ var ClientModel = qc.defineBehaviour('qc.engine.ClientModel', qc.Behaviour, func
 });
 
 ClientModel.prototype.awake = function() {
-  var self = this;
   this.spawner = this.spawnerNode.getScript('qc.engine.Spawner');
-  this.model = new Model();
+};
+
+ClientModel.prototype.loadModel = function(playerId, state) {
+  var self = this;
+  this.localId = playerId;
+  this.model = new Model(state);
+
+  // Spawn game objects for existing enemies
+  for (var playerId in this.model.players) {
+    var player = this.model.players[playerId];
+    for (var enemyId in player.enemies) {
+      var enemy = player.enemies[enemyId];
+      self.spawner.spawn(enemy, playerId == self.localId);
+    }
+  }
 
   this.addListener(this.game.input.onKeyDown, function(keyCode) {
     self.submitCommand({
@@ -34,11 +47,6 @@ ClientModel.prototype.runCommand = function(command) {
 
 ClientModel.prototype.logicUpdate = function(delta) {
   this.model.update(delta);
-};
-
-ClientModel.prototype.loadSnapshot = function(id, snapshot) {
-  this.localId = id;
-  this.model.deserialize(snapshot);
 };
 
 ClientModel.prototype.submitCommand = function(command) {

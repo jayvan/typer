@@ -12,7 +12,9 @@ var gameModel = new Model();
 var lastUpdate = Date.now();
 var nextPlayerId = 0;
 var nextEnemyId = 0;
-var ids = {};
+var ids = [];
+var connections = [];
+var lastConnection = null;
 
 setInterval(function() {
   var now = Date.now();
@@ -37,9 +39,8 @@ setInterval(function() {
 
   commands = [];
 
-  if (Object.keys(ids).length > 0 && Math.random() > 0.99) {
-    var online = Object.keys(ids);
-    var owner = ids[online[Math.floor(Math.random() * online.length)]];
+  if (ids.length > 0 && Math.random() > 0.99) {
+    var owner = ids[Math.floor(Math.random() * ids.length)];
     commands.push({
       type: 'spawnEnemy',
       data: {
@@ -58,20 +59,26 @@ Server.on('receive', function(connection, data) {
 });
 
 Server.on('disconnect', function(connection) {
+  var index = connections.indexOf(connection);
+
   commands.push({
     type: 'playerLeft',
     data: {
-      id: ids[connection]
+      id: ids[index]
     }
   });
 
-  delete ids[connection];
+  ids.splice(index, 1);
+  connections.splice(index, 1);
 });
 
 Server.on('connect', function(connection, syncFunction) {
   var id = nextPlayerId++;
-  ids[connection] = id;
-  console.log("New connection");
+  ids.push(id);
+  connections.push(connection);
+  console.log("New connection", connection.remoteAddress);
+  console.log(ids);
+  console.log(connections);
 
   commands.push({
     type: 'playerJoined',
