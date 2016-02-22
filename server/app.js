@@ -22,9 +22,16 @@ setInterval(function() {
   lastUpdate = now;
   tick++;
 
+  var validCommands = [];
+
   // 1. Process all commands
   commands.forEach(function(command) {
-    gameModel.runCommand(command);
+    if (gameModel.commandValid(command)) {
+      gameModel.runCommand(command);
+      validCommands.push(command);
+    } else {
+      console.log("Invalid command:", command);
+    }
   });
 
   // 2. Update game objects
@@ -34,7 +41,7 @@ setInterval(function() {
   Server.notifyAll({
     tick: tick,
     delta: delta,
-    commands: commands
+    commands: validCommands
   });
 
   commands = [];
@@ -42,6 +49,7 @@ setInterval(function() {
   if (ids.length > 0 && Math.random() > 0.99) {
     var owner = ids[Math.floor(Math.random() * ids.length)];
     commands.push({
+      origin: 'server',
       type: 'spawnEnemy',
       data: {
         id: nextEnemyId++,
@@ -54,6 +62,10 @@ setInterval(function() {
 }, 1000 / TICKS_PER_SECOND);
 
 Server.on('receive', function(connection, data) {
+  var id = ids[connections.indexOf(connection)];
+  data.forEach(function(command) {
+    command.origin = id;
+  });
   console.log('RECEIVED:', data);
   commands.push.apply(commands, data);
 });
@@ -62,6 +74,7 @@ Server.on('disconnect', function(connection) {
   var index = connections.indexOf(connection);
 
   commands.push({
+    origin: 'server',
     type: 'playerLeft',
     data: {
       id: ids[index]
@@ -76,16 +89,15 @@ Server.on('connect', function(connection, syncFunction) {
   var id = nextPlayerId++;
   ids.push(id);
   connections.push(connection);
-  console.log("New connection", connection.remoteAddress);
-  console.log(ids);
-  console.log(connections);
 
   commands.push({
+    origin: 'server',
     type: 'playerJoined',
     data: {
       id: id
     }
   });
+
   syncFunction({
     tick: tick,
     snapshot: true,

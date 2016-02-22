@@ -31,6 +31,31 @@ Model.prototype.serialize = function() {
   };
 };
 
+Model.prototype.commandValid = function(command) {
+  try {
+    if (command.type == 'playerJoined') {
+      return command.origin == 'server' &&
+             this.players[command.data.id] === undefined;
+    } else if (command.type == 'playerLeft') {
+      return command.origin == 'server' &&
+             this.players[command.data.id] !== undefined;
+    } else if (command.type == 'keyTyped') {
+      return command.origin === command.data.playerId;
+    } else if (command.type == 'spawnEnemy') {
+      return command.origin == 'server' &&
+             this.players[command.data.playerId] &&
+             command.data.duration > 0 &&
+             command.data.word.length > 0;
+    } else {
+      console.log("command type", command.type, "not recognized");
+    }
+  } catch (e) {
+    console.log("Command", command, "failed validation:", e);
+  }
+
+  return false;
+};
+
 Model.prototype.runCommand = function(command) {
   console.log("Running command", command);
   // playerJoined {

@@ -55,7 +55,11 @@ wsServer.on('request', function(request) {
 
     connection.on('message', function(data, flags) {
       if (data.type === 'utf8') {
-        handlers.receive(connection, JSON.parse(data.utf8Data));
+        try {
+          handlers.receive(connection, JSON.parse(data.utf8Data));
+        } catch(e) {
+          console.log("Received non JSON message from client");
+        }
       }
     });
 

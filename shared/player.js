@@ -40,6 +40,7 @@ Player.prototype.update = function(delta) {
 }
 
 Player.prototype.removeEnemy = function(enemy) {
+  this.enemies[enemy.id] = null;
   delete this.enemies[enemy.id];
 
   var index = this.targetedEnemyIds.indexOf(enemy.id);
@@ -53,7 +54,9 @@ Player.prototype.removeEnemy = function(enemy) {
 };
 
 Player.prototype.resetTargets = function() {
-  this.targetedEnemyIds = Object.keys(this.enemies);
+  this.targetedEnemyIds = Object.keys(this.enemies).map(function(n) {
+    return parseInt(n);
+  });;
 };
 
 Player.prototype.addEnemy = function(enemy) {
