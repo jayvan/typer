@@ -11,6 +11,7 @@ var Model = function(params) {
   }
 
   this.enemySpawned = new Action();
+  this.enemyReassigned = new Action();
 
   this.players = {};
   Object.keys(params.players).forEach(function(playerId) {
@@ -70,8 +71,10 @@ Model.prototype.runCommand = function(command) {
   //   id: Int (The id of the leaving player)
   // }
   else if (command.type == "playerLeft") {
+    var playerTargets = this.players[command.data.id].enemies;
     this.players[command.data.id] = null;
     delete this.players[command.data.id];
+    this.distributeTargets(playerTargets);
   }
 
   // spawnEnemy {
@@ -102,6 +105,24 @@ Model.prototype.update = function(delta) {
     }
 
     player.update(delta);
+  }
+};
+
+Model.prototype.distributeTargets = function(targets) {
+  remainingPlayers = Object.keys(this.players);
+  if (remainingPlayers.length === 0) {
+    return;
+  }
+
+  var i = 0;
+  for (var id in targets) {
+    var target = targets[id];
+    var playerId = remainingPlayers[i];
+    target.reset();
+    target.playerId = remainingPlayers[i];
+    this.enemyReassigned.trigger(target);
+    this.players[playerId].addEnemy(target);
+    i = (i + 1) % remainingPlayers.length;
   }
 };
 

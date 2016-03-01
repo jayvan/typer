@@ -39,6 +39,10 @@ ClientModel.prototype.loadModel = function(playerId, state) {
   this.model.enemySpawned.subscribe(function(enemy) {
     self.spawner.spawn(enemy, enemy.playerId == self.localId);
   });
+
+  this.model.enemyReassigned.subscribe(function(enemy) {
+    self.spawner.reassign(enemy, enemy.playerId == self.localId);
+  });
 };
 
 ClientModel.prototype.runCommand = function(command) {

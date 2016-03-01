@@ -3,6 +3,7 @@ var Enemy = qc.defineBehaviour('qc.engine.Enemy', qc.Behaviour, function() {
   this.typedColor = null;
   this.untypedColor = null;
   this.textNode = null;
+  this.destroyed = new Action();
   this.subscriptions = [];
 }, {
   textNode: qc.Serializer.NODE,
@@ -14,6 +15,7 @@ Enemy.prototype.awake = function() {
 };
 
 Enemy.prototype.onDestroy = function() {
+  this.destroyed.trigger();
   this.subscriptions.forEach(function(subscription) {
     subscription();
   });
